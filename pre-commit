@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ $(git symbolic-ref -q HEAD) == "refs/heads/main" ] 
+then
+    echo "don't commit on main branch, exiting"
+    exit -1
+fi
+
+# Don't commit files that have debug text in them
+git diff --diff-filter=d --staged --name-only | grep -e '\(.*\).swift$' | while read line ; do 
+    doNotCommitMessage=$(find . -name $(basename $line) -exec grep -ni "do not commit" {} \;)
+    if [ -n "$doNotCommitMessage" ] 
+    then 
+        echo "$line\n$doNotCommitMessage\n\nRemove debug text and commit again..."
+        exit -1
+    fi
+done
